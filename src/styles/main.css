@@ -1,0 +1,179 @@
+/* ============================================
+   ClimaApp — Estilos Globales
+   Reset, tipografía, focus-visible, reduced-motion
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import './tokens.css';
+
+/* — Reset — */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    color: var(--color-text);
+    /* Fondo dinámico dark premium */
+    background: linear-gradient(135deg, #0f172a 0%, #1e1e2f 50%, #1a1a3e 100%);
+    background-size: 200% 200%;
+    animation: gradient-bg 15s ease infinite;
+
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes gradient-bg {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* — Scrollbar personalizada — */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-surface);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+/* — Focus visible (WCAG AA obligatorio) —
+   Outline claro y visible para navegación por teclado.
+   Solo aparece con teclado, no con click del mouse. */
+:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* — Links — */
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* — Botón base — */
+button {
+    font-family: var(--font-family);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: inherit;
+}
+
+/* — Inputs — */
+input {
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+}
+
+/* — Headings — */
+h1 {
+    font-size: var(--font-size-h1);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: var(--font-size-h2);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+h3 {
+    font-size: var(--font-size-h3);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* — Utilidades — */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* — Transiciones de página (Vue <Transition>) — */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity var(--transition-base);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* — Transiciones de lista (Vue <TransitionGroup>) — */
+.list-enter-active,
+.list-leave-active {
+    transition: all var(--transition-base);
+}
+
+.list-enter-from {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.list-leave-to {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+.list-move {
+    transition: transform var(--transition-base);
+}
+
+/* — Reduced Motion (WCAG obligatorio) —
+   Si el usuario prefiere menos movimiento,
+   desactivamos TODAS las transiciones y animaciones.
+   Esto incluye scroll suave. */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+        scroll-behavior: auto !important;
+    }
+}
