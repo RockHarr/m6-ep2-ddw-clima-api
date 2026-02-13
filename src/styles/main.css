@@ -35,8 +35,15 @@ body {
 
     line-height: 1.5;
     min-height: 100vh;
+    min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 1024px), (hover: none), (pointer: coarse) {
+    body {
+        background-attachment: scroll;
+    }
 }
 
 .glass {

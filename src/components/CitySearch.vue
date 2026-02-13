@@ -182,7 +182,7 @@ defineExpose({ clearInput })
 
 /* Dar espacio al botón del micro */
 .city-search__input--with-mic {
-  padding-right: 44px;
+  padding-right: 56px;
 }
 
 .city-search__input::placeholder {
@@ -199,9 +199,9 @@ defineExpose({ clearInput })
 /* ── Botón micrófono ── */
 .city-search__mic {
   position: absolute;
-  right: 10px;
-  width: 28px;
-  height: 28px;
+  right: 6px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   color: var(--color-text-muted);

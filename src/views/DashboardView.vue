@@ -267,6 +267,7 @@ onMounted(async () => {
 .dashboard-layout {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   transition: background var(--transition-slow);
 }
@@ -299,6 +300,7 @@ onMounted(async () => {
   margin-bottom: 0;
   background: linear-gradient(to right, white, var(--color-text-muted));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -752,6 +754,10 @@ onMounted(async () => {
    ═══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .dashboard-layout {
+    --mobile-header-offset: 156px;
+  }
+
+  .dashboard-layout {
     display: block;               /* Quitar flex para scroll natural de la página */
     height: auto !important;
     overflow: visible !important; /* La página entera scrollea */
@@ -764,11 +770,11 @@ onMounted(async () => {
     left: 0;
     right: 0;
     width: 100% !important;
-    height: auto !important;
+    height: calc(var(--mobile-header-offset) + env(safe-area-inset-top)) !important;
     z-index: 100;
     border-right: none;
     border-bottom: 1px solid var(--glass-border);
-    padding: var(--space-sm) var(--space-lg);
+    padding: calc(var(--space-sm) + env(safe-area-inset-top)) var(--space-lg) var(--space-sm);
     /* Fondo sólido opaco para que el contenido pase detrás */
     background: #0f172a !important;
     backdrop-filter: none !important;
@@ -777,6 +783,8 @@ onMounted(async () => {
 
   .sidebar__header {
     margin-bottom: 0;
+    height: 100%;
+    overflow-y: auto;
   }
 
   /* Ocultar favoritos/descubrimiento y footer en mobile */
@@ -791,12 +799,12 @@ onMounted(async () => {
 
   .main-content {
     /* Empujar contenido debajo del sidebar fijo */
-    padding-top: 130px;
+    padding-top: calc(var(--mobile-header-offset) + env(safe-area-inset-top) + var(--space-md));
     padding-left: var(--space-lg);
     padding-right: var(--space-lg);
     padding-bottom: var(--space-xl);
     overflow: visible;
-    min-height: 80vh;
+    min-height: calc(100dvh - var(--mobile-header-offset));
   }
 
   /* Desactivar hover lift en touch screens */
@@ -809,12 +817,16 @@ onMounted(async () => {
    RESPONSIVE — Mobile (≤768px)
    ═══════════════════════════════════════════════ */
 @media (max-width: 768px) {
+  .dashboard-layout {
+    --mobile-header-offset: 148px;
+  }
+
   .sidebar {
-    padding: var(--space-sm) var(--space-md);
+    padding: calc(var(--space-sm) + env(safe-area-inset-top)) var(--space-md) var(--space-sm);
   }
 
   .main-content {
-    padding-top: 120px;
+    padding-top: calc(var(--mobile-header-offset) + env(safe-area-inset-top) + var(--space-md));
     padding-left: var(--space-md);
     padding-right: var(--space-md);
   }
@@ -884,8 +896,12 @@ onMounted(async () => {
    RESPONSIVE — Small phone (≤480px)
    ═══════════════════════════════════════════════ */
 @media (max-width: 480px) {
+  .dashboard-layout {
+    --mobile-header-offset: 136px;
+  }
+
   .main-content {
-    padding-top: 110px;
+    padding-top: calc(var(--mobile-header-offset) + env(safe-area-inset-top) + var(--space-sm));
   }
 
   .current-temp {

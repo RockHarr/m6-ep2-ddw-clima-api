@@ -108,12 +108,14 @@ function handleLogin() {
 <style scoped>
 .login-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-xl);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--color-bg);
 }
 
@@ -252,5 +254,16 @@ function handleLogin() {
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .login-page {
+    align-items: flex-start;
+    padding: calc(var(--space-xl) + env(safe-area-inset-top)) var(--space-md) var(--space-xl);
+  }
+
+  .login-card {
+    padding: var(--space-2xl) var(--space-lg);
+  }
 }
 </style>

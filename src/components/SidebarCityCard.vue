@@ -214,17 +214,17 @@ const ambientTheme = computed(() => themeClass.value.replace('theme--', ''))
 
 .city-card__remove {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
+  top: 8px;
+  right: 8px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.2);
   color: white;
   display: none;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 16px;
   transition: background 0.2s;
 }
 
@@ -234,5 +234,11 @@ const ambientTheme = computed(() => themeClass.value.replace('theme--', ''))
 
 .city-card__remove:hover {
   background: var(--color-error);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .city-card__remove {
+    display: flex;
+  }
 }
 </style>
