@@ -241,6 +241,12 @@ function handleGeoClick() {
 onMounted(async () => {
   weatherStore.loadFavorites()
   weatherStore.searchCitiesAction('')
+
+  // Mostrar saludo 4s antes de cargar la última ciudad visitada
+  const hasLastCity = !!localStorage.getItem('clima_last_city')
+  if (hasLastCity) {
+    await new Promise(resolve => setTimeout(resolve, 4000))
+  }
   await weatherStore.loadLastCity()
 })
 </script>
@@ -741,53 +747,61 @@ onMounted(async () => {
 
 /* ═══════════════════════════════════════════════
    RESPONSIVE — Tablet & Mobile (≤1024px)
-   Sidebar → header sticky compacto en la parte superior.
-   Contenido meteorológico ocupa el 100% restante.
+   Sidebar → barra fija (position:fixed) en la parte
+   superior. El contenido se desplaza debajo.
    ═══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .dashboard-layout {
-    flex-direction: column;
-    height: auto;
-    min-height: 100vh;
-    overflow-x: hidden;
-    overflow-y: auto;
+    display: block;               /* Quitar flex para scroll natural de la página */
+    height: auto !important;
+    overflow: visible !important; /* La página entera scrollea */
   }
 
-  /* Sidebar se convierte en header sticky */
+  /* Sidebar FIJO en la parte superior */
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: sticky;
+    position: fixed !important;
     top: 0;
-    z-index: 20;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    height: auto !important;
+    z-index: 100;
     border-right: none;
     border-bottom: 1px solid var(--glass-border);
-    padding: var(--space-md) var(--space-lg);
-    flex-shrink: 0;
-    /* Fondo sólido para que el contenido pase por detrás */
-    background: rgba(15, 23, 42, 0.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    padding: var(--space-sm) var(--space-lg);
+    /* Fondo sólido opaco para que el contenido pase detrás */
+    background: #0f172a !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   .sidebar__header {
     margin-bottom: 0;
   }
 
-  /* Ocultar favoritos, descubrimiento y footer en mobile */
+  /* Ocultar favoritos/descubrimiento y footer en mobile */
   .sidebar__content,
   .sidebar__footer {
-    display: none;
+    display: none !important;
   }
 
   .sidebar__brand {
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
   }
 
   .main-content {
-    flex: 1;
-    padding: var(--space-lg);
-    overflow-y: visible;
+    /* Empujar contenido debajo del sidebar fijo */
+    padding-top: 130px;
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+    padding-bottom: var(--space-xl);
+    overflow: visible;
+    min-height: 80vh;
+  }
+
+  /* Desactivar hover lift en touch screens */
+  .widget:hover {
+    transform: none;
   }
 }
 
@@ -800,7 +814,9 @@ onMounted(async () => {
   }
 
   .main-content {
-    padding: var(--space-md);
+    padding-top: 120px;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
   }
 
   .bento-grid {
@@ -812,7 +828,6 @@ onMounted(async () => {
     padding: var(--space-lg);
   }
 
-  /* Hero compacto: sin min-height fijo */
   .widget--hero {
     min-height: auto;
     padding: var(--space-xl) var(--space-lg);
@@ -852,7 +867,7 @@ onMounted(async () => {
   }
 
   .empty-state {
-    margin-top: var(--space-2xl);
+    margin-top: var(--space-xl);
     padding: 0 var(--space-md);
   }
 
@@ -869,6 +884,10 @@ onMounted(async () => {
    RESPONSIVE — Small phone (≤480px)
    ═══════════════════════════════════════════════ */
 @media (max-width: 480px) {
+  .main-content {
+    padding-top: 110px;
+  }
+
   .current-temp {
     font-size: 3rem;
   }
