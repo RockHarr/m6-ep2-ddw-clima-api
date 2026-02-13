@@ -4,14 +4,35 @@
     :class="`theme--${currentTheme}`"
   >
     <!-- Sidebar -->
-    <aside class="sidebar glass">
+    <aside ref="sidebarRef" class="sidebar glass" :class="{ 'sidebar--open': isMobileMenuOpen }">
+      <!-- Mobile Backdrop -->
+      <div 
+        class="sidebar__backdrop" 
+        v-if="isMobileMenuOpen"
+        @click="isMobileMenuOpen = false"
+      ></div>
+
       <div class="sidebar__header">
-        <div class="sidebar__brand">
-          <AppLogo :size="32" />
-          <h2 class="sidebar__title">ClimaApp</h2>
+        <div class="sidebar__brand-row">
+          <div class="sidebar__brand">
+            <AppLogo :size="32" />
+            <h2 class="sidebar__title">ClimaApp</h2>
+          </div>
+          <button 
+            class="mobile-toggle" 
+            @click="toggleMobileMenu"
+            aria-label="Menú principal"
+          >
+            <span class="hamburger-icon">{{ isMobileMenuOpen ? '✕' : '☰' }}</span>
+          </button>
         </div>
+
         <div class="sidebar__search">
-          <CitySearch ref="citySearchRef" @search="handleSearchUpdate" />
+          <CitySearch
+            ref="citySearchRef"
+            @search="handleSearchUpdate"
+            @submit="handleSearchSubmit"
+          />
           <button
             class="geo-btn"
             :disabled="weatherStore.statusGeo === 'loading'"
@@ -39,36 +60,38 @@
         </div>
       </div>
 
-      <div class="sidebar__content">
-        <CityResults :query="searchQuery" :mobileHidden="!searchQuery" @select="handleCitySelect" />
-
-        <section class="sidebar__favorites">
-          <h3 class="sidebar__section-title">⭐ Mis Ciudades</h3>
-          <div v-if="weatherStore.favorites.length > 0" class="sidebar__list">
-            <TransitionGroup name="list">
-              <SidebarCityCard
-                v-for="fav in weatherStore.favorites"
-                :key="fav.id"
-                :city="fav"
-                :weather="weatherStore.favoritesWeather[fav.id]"
-                :isActive="weatherStore.selectedCity?.id === fav.id"
-                :removable="true"
-                @select="handleCitySelect"
-                @remove="weatherStore.removeFavorite"
-              />
-            </TransitionGroup>
-          </div>
-          <p v-else class="sidebar__favorites-empty">
-            Guarda ciudades para acceder rápido usando ★ en el clima.
-          </p>
-        </section>
-      </div>
-
-      <div class="sidebar__footer">
-        <button class="logout-btn" @click="handleLogout">
-          <span>Cerrar Sesión</span>
-          <span class="logout-icon">↪</span>
-        </button>
+      <div class="sidebar__drawer-content">
+        <div class="sidebar__content">
+          <CityResults :query="searchQuery" @select="handleCitySelect" />
+  
+          <section class="sidebar__favorites">
+            <h3 class="sidebar__section-title">⭐ Mis Ciudades</h3>
+            <div v-if="weatherStore.favorites.length > 0" class="sidebar__list">
+              <TransitionGroup name="list">
+                <SidebarCityCard
+                  v-for="fav in weatherStore.favorites"
+                  :key="fav.id"
+                  :city="fav"
+                  :weather="weatherStore.favoritesWeather[fav.id]"
+                  :isActive="weatherStore.selectedCity?.id === fav.id"
+                  :removable="true"
+                  @select="handleCitySelect"
+                  @remove="weatherStore.removeFavorite"
+                />
+              </TransitionGroup>
+            </div>
+            <p v-else class="sidebar__favorites-empty">
+              Guarda ciudades para acceder rápido usando ★ en el clima.
+            </p>
+          </section>
+        </div>
+  
+        <div class="sidebar__footer">
+          <button class="logout-btn" @click="handleLogout">
+            <span>Cerrar Sesión</span>
+            <span class="logout-icon">↪</span>
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -80,6 +103,16 @@
         :theme="currentTheme"
         :timezone="weatherStore.forecast?.timezone"
       />
+      <Transition name="fade">
+        <div
+          v-if="weatherStore.favoritesMessage"
+          class="favorites-feedback"
+          role="alert"
+          aria-live="assertive"
+        >
+          {{ weatherStore.favoritesMessage }}
+        </div>
+      </Transition>
 
       <Transition name="fade" mode="out-in">
         <div v-if="!weatherStore.selectedCity && weatherStore.statusWeather === 'idle'" class="empty-state" key="empty">
@@ -167,7 +200,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWeatherStore } from '@/stores/weather.store.js'
 import { useAuthStore } from '@/stores/auth.store.js'
@@ -182,18 +215,38 @@ import AppLogo from '@/components/AppLogo.vue'
 const weatherStore = useWeatherStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const sidebarRef = ref(null)
 const citySearchRef = ref(null)
 const searchQuery = ref('')
 const showGeoBanner = ref(false)
 
+// Mobile Menu State
+const isMobileMenuOpen = ref(false)
+const touchStartX = ref(0)
+const touchEndX = ref(0)
+let swipeTarget = null
+
+function toggleMobileMenu() {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
 function handleSearchUpdate(query) {
   searchQuery.value = query
+}
+
+function handleSearchSubmit(query) {
+  if (!query) return
+  if (window.innerWidth <= 1024) {
+    isMobileMenuOpen.value = true
+  }
 }
 
 async function handleCitySelect(city) {
   searchQuery.value = ''
   await weatherStore.selectCity(city)
   citySearchRef.value?.clearInput()
+  // Close menu after selection
+  isMobileMenuOpen.value = false
 }
 
 function toggleFavorite() {
@@ -238,6 +291,24 @@ function handleGeoClick() {
   weatherStore.geolocateCity()
 }
 
+// Swipe detection logic
+function handleTouchStart(e) {
+  touchStartX.value = e.changedTouches ? e.changedTouches[0].screenX : e.screenX
+}
+
+function handleTouchEnd(e) {
+  touchEndX.value = e.changedTouches ? e.changedTouches[0].screenX : e.screenX
+  handleSwipe()
+}
+
+function handleSwipe() {
+  if (!isMobileMenuOpen.value) return
+  // Swipe Left to close (dragged at least 50px left)
+  if (touchStartX.value - touchEndX.value > 50) {
+    isMobileMenuOpen.value = false
+  }
+}
+
 onMounted(async () => {
   weatherStore.loadFavorites()
   weatherStore.searchCitiesAction('')
@@ -248,6 +319,22 @@ onMounted(async () => {
     await new Promise(resolve => setTimeout(resolve, 4000))
   }
   await weatherStore.loadLastCity()
+  
+  // Swipe solo en dispositivos táctiles y limitado al sidebar
+  const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches
+  if (isCoarsePointer && sidebarRef.value) {
+    swipeTarget = sidebarRef.value
+    swipeTarget.addEventListener('touchstart', handleTouchStart, { passive: true })
+    swipeTarget.addEventListener('touchend', handleTouchEnd, { passive: true })
+  }
+})
+
+onUnmounted(() => {
+  if (swipeTarget) {
+    swipeTarget.removeEventListener('touchstart', handleTouchStart)
+    swipeTarget.removeEventListener('touchend', handleTouchEnd)
+    swipeTarget = null
+  }
 })
 </script>
 
@@ -269,6 +356,7 @@ onMounted(async () => {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  overflow-x: clip;
   transition: background var(--transition-slow);
 }
 
@@ -281,6 +369,21 @@ onMounted(async () => {
   border-right: 1px solid var(--glass-border);
   z-index: 10;
   transition: transform var(--transition-base);
+}
+
+.sidebar__brand-row {
+  display: block;
+}
+
+.sidebar__drawer-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.mobile-toggle {
+  display: none;
 }
 
 .sidebar__header {
@@ -360,6 +463,7 @@ onMounted(async () => {
 .main-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--space-3xl);
   display: flex;
   flex-direction: column;
@@ -390,12 +494,14 @@ onMounted(async () => {
   gap: var(--space-2xl);
   position: relative; /* Se ubica encima del WeatherAmbient */
   z-index: 1;
+  min-width: 0;
 }
 
 .widget {
   padding: var(--space-2xl);
   border-radius: var(--radius-xl);
   transition: transform var(--transition-base), box-shadow var(--transition-base);
+  min-width: 0;
 }
 
 .widget:hover {
@@ -416,6 +522,7 @@ onMounted(async () => {
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  overflow: hidden;
 }
 
 .favorite-toggle {
@@ -435,6 +542,7 @@ onMounted(async () => {
   transition: all var(--transition-base);
   z-index: 5;
   white-space: nowrap;
+  max-width: calc(100% - (var(--space-xl) * 2));
 }
 
 .favorite-toggle:hover {
@@ -508,6 +616,7 @@ onMounted(async () => {
   background: rgba(15, 23, 42, 0.45) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
+  overflow: hidden;
 }
 
 .hourly-list {
@@ -516,6 +625,8 @@ onMounted(async () => {
   overflow-x: auto;
   padding: var(--space-md) 0;
   scrollbar-width: none; /* Firefox */
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .hourly-list::-webkit-scrollbar {
@@ -550,6 +661,7 @@ onMounted(async () => {
   background: rgba(15, 23, 42, 0.45) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
+  overflow: hidden;
 }
 
 .widget__title {
@@ -578,6 +690,9 @@ onMounted(async () => {
   width: fit-content;
   margin-left: auto;
   margin-right: auto;
+  max-width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-detail-item {
@@ -715,6 +830,27 @@ onMounted(async () => {
   color: #fde68a;
 }
 
+.favorites-feedback {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + var(--space-md));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 220;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  border: 1px solid rgba(167, 243, 208, 0.55);
+  color: #f0fdf4;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  box-shadow: 0 10px 28px rgba(6, 95, 70, 0.4);
+  max-width: min(92vw, 420px);
+  text-align: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
 /* Favorites empty state */
 .sidebar__favorites-empty {
   font-size: var(--font-size-small);
@@ -787,14 +923,97 @@ onMounted(async () => {
     overflow-y: auto;
   }
 
-  /* Ocultar favoritos/descubrimiento y footer en mobile */
-  .sidebar__content,
+  /* Ocultar inicialmente el contenido del drawer en mobile */
+  .sidebar__drawer-content {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: #0f172a; /* Fondo sólido igual al header */
+    z-index: 101; /* Encima del header y backdrop */
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    padding-top: calc(var(--mobile-header-offset) + env(safe-area-inset-top));
+    /* Drawer debajo del header fijo */
+    top: calc(var(--mobile-header-offset) + env(safe-area-inset-top));
+    border-right: 1px solid var(--glass-border);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+  }
+
+  /* Cuando el menú está abierto */
+  .sidebar--open .sidebar__drawer-content {
+    transform: translateX(0);
+  }
+
+  /* Backdrop oscuro */
+  .sidebar__backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .sidebar__content {
+    display: flex !important; /* Restaurar display flex */
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+  }
+
   .sidebar__footer {
-    display: none !important;
+    display: flex !important; /* Restaurar display flex */
+    padding: var(--space-lg);
+    border-top: 1px solid var(--glass-border);
+    background: #0f172a;
+  }
+
+  /* Ajustar branding row para alojar el toggle */
+  .sidebar__brand-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: var(--space-sm);
   }
 
   .sidebar__brand {
-    margin-bottom: var(--space-xs);
+    margin-bottom: 0; /* Reset */
+  }
+
+  /* Botón Hamburguesa */
+  .mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+  }
+
+  .mobile-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .hamburger-icon {
+    font-size: 1.5rem;
+    line-height: 1;
   }
 
   .main-content {
@@ -803,8 +1022,13 @@ onMounted(async () => {
     padding-left: var(--space-lg);
     padding-right: var(--space-lg);
     padding-bottom: var(--space-xl);
-    overflow: visible;
+    overflow-y: visible;
+    overflow-x: hidden;
     min-height: calc(100dvh - var(--mobile-header-offset));
+  }
+
+  .favorites-feedback {
+    top: calc(env(safe-area-inset-top) + var(--space-sm));
   }
 
   /* Desactivar hover lift en touch screens */
@@ -829,6 +1053,11 @@ onMounted(async () => {
     padding-top: calc(var(--mobile-header-offset) + env(safe-area-inset-top) + var(--space-md));
     padding-left: var(--space-md);
     padding-right: var(--space-md);
+    overflow-x: hidden;
+  }
+
+  .favorites-feedback {
+    max-width: calc(100vw - (var(--space-md) * 2));
   }
 
   .bento-grid {
@@ -843,6 +1072,18 @@ onMounted(async () => {
   .widget--hero {
     min-height: auto;
     padding: var(--space-xl) var(--space-lg);
+  }
+
+  .favorite-label {
+    display: none;
+  }
+
+  .favorite-toggle {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+    right: var(--space-md);
   }
 
   .city-name {

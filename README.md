@@ -2,6 +2,14 @@
 
 App del clima con autenticación, búsqueda de ciudades por API, pronóstico 7 días + 24 horas, favoritos, efectos ambientales CSS y accesibilidad WCAG AA.
 
+## 🆕 Novedades Recientes
+
+- Feedback visual de favoritos en dashboard:
+  `Agregado a favoritos`, `Eliminado de favoritos`, `ya está en favoritos` y mensaje de límite máximo.
+- Mejoras de responsividad móvil:
+  control de overflow horizontal, drawer móvil lateral y ajustes para safe-area/viewport dinámico.
+- Se agregó historial de cambios en `CHANGELOG.md`.
+
 ## 🛠️ Stack
 
 | Tecnología        | Versión | Uso                                          |
@@ -206,3 +214,7 @@ npm run build    # Output: dist/
 - **Web Speech API** (`CitySearch.vue`): detección de soporte, manejo de errores por código, limpieza en `onUnmounted`
 - **WeatherAmbient** (`WeatherAmbient.vue`): efectos 100% CSS — solo `transform` y `opacity` → GPU-accelerated, cero JS en el loop de animación
 - **Componentes vue-bits** (`AuroraBackground.vue`, `ShinyText.vue`): portados de TypeScript a JS vanilla, sin dependencia de la librería original
+
+## 📚 Documentación de Cambios
+
+Consultar `CHANGELOG.md` para el detalle de cambios por versión.

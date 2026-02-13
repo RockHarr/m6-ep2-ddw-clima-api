@@ -17,7 +17,7 @@ const weatherStore = useWeatherStore()
 const query = ref('')
 let debounceTimer = null
 
-const emit = defineEmits(['search'])
+const emit = defineEmits(['search', 'submit'])
 
 // ── Voz ──────────────────────────────────────────────────────────────────────
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -85,6 +85,13 @@ function handleSearch() {
   weatherStore.searchCitiesAction(trimmed)
 }
 
+function handleSubmit() {
+  const trimmed = query.value.trim()
+  if (!trimmed) return
+  handleSearch()
+  emit('submit', trimmed)
+}
+
 watch(query, (newVal) => {
   clearTimeout(debounceTimer)
   emit('search', newVal)
@@ -119,7 +126,7 @@ defineExpose({ clearInput })
         placeholder="Buscar ciudad..."
         autocomplete="off"
         aria-label="Buscar ciudad"
-        @keyup.enter="handleSearch"
+        @keyup.enter="handleSubmit"
       />
 
       <!-- Botón de voz: solo si el navegador lo soporta -->

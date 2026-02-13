@@ -145,11 +145,19 @@ const isSearching = computed(() => props.query && props.query.trim().length > 0)
 .city-results__name {
   font-weight: 500;
   color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .city-results__detail {
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .city-results__empty {

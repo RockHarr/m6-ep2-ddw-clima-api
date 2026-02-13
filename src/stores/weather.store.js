@@ -33,6 +33,7 @@ export const useWeatherStore = defineStore("weather", () => {
   const defaultCitiesWeather = ref({});
   const statusGeo = ref("idle"); // idle | loading | error
   const geoMessage = ref(""); // mensaje de feedback de geolocalización
+  let favoritesMessageTimer = null;
 
   // --- Computed ---
   const hasForecast = computed(() => forecast.value?.daily?.length > 0);
@@ -100,16 +101,39 @@ export const useWeatherStore = defineStore("weather", () => {
     await fetchWeatherForList(favorites.value, favoritesWeather);
   }
 
+  function setFavoritesMessage(message) {
+    favoritesMessage.value = message;
+    if (favoritesMessageTimer) clearTimeout(favoritesMessageTimer);
+    favoritesMessageTimer = setTimeout(() => {
+      favoritesMessage.value = "";
+      favoritesMessageTimer = null;
+    }, 2200);
+  }
+
   function addFavorite(city) {
-    if (favorites.value.length >= MAX_FAVORITES || favorites.value.some(f => f.id === city.id)) return;
+    if (favorites.value.length >= MAX_FAVORITES) {
+      setFavoritesMessage(`Límite alcanzado: máximo ${MAX_FAVORITES} favoritas.`);
+      return;
+    }
+
+    if (favorites.value.some(f => f.id === city.id)) {
+      setFavoritesMessage("Esta ciudad ya está en favoritos.");
+      return;
+    }
+
     favorites.value.push({ ...city });
     saveFavorites();
     fetchWeatherForFavs();
+    setFavoritesMessage("Agregado a favoritos.");
   }
 
   function removeFavorite(cityId) {
+    const before = favorites.value.length;
     favorites.value = favorites.value.filter(f => f.id !== cityId);
     saveFavorites();
+    if (favorites.value.length < before) {
+      setFavoritesMessage("Eliminado de favoritos.");
+    }
   }
 
   function isFavorite(cityId) {
@@ -194,6 +218,10 @@ export const useWeatherStore = defineStore("weather", () => {
     statusCities.value = "idle";
     statusWeather.value = "idle";
     favoritesMessage.value = "";
+    if (favoritesMessageTimer) {
+      clearTimeout(favoritesMessageTimer);
+      favoritesMessageTimer = null;
+    }
   }
 
   return {
