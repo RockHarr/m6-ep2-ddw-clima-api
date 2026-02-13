@@ -26,6 +26,7 @@
             <span class="hamburger-icon">{{ isMobileMenuOpen ? '✕' : '☰' }}</span>
           </button>
         </div>
+        <p class="sidebar__welcome">Hola, {{ greetingName }}!</p>
 
         <div class="sidebar__search">
           <div class="sidebar__search-row">
@@ -291,6 +292,8 @@ const currentTheme = computed(() => {
   return 'default'
 })
 
+const greetingName = computed(() => authStore.currentUser || 'profe')
+
 function handleGeoClick() {
   showGeoBanner.value = false
   weatherStore.geolocateCity()
@@ -410,6 +413,15 @@ onUnmounted(() => {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.sidebar__welcome {
+  margin-top: -2px;
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-small);
+  color: #dbeafe;
+  font-weight: var(--font-weight-medium);
+  opacity: 0.95;
 }
 
 .sidebar__search {
@@ -1090,14 +1102,16 @@ onUnmounted(() => {
   }
 
   .sidebar__search :deep(.city-search__input) {
-    min-height: 40px;
+    min-height: 44px;
     padding-top: var(--space-sm);
     padding-bottom: var(--space-sm);
+    padding-right: 52px;
   }
 
   .sidebar__search :deep(.city-search__mic) {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
+    right: 8px;
   }
 
   .favorites-feedback {
@@ -1147,6 +1161,10 @@ onUnmounted(() => {
     padding: var(--space-xl) var(--space-lg);
   }
 
+  .widget--hero__main {
+    padding-top: 28px;
+  }
+
   .favorite-label {
     display: none;
   }
@@ -1165,6 +1183,7 @@ onUnmounted(() => {
 
   .city-origin {
     font-size: var(--font-size-small);
+    margin-top: 0;
   }
 
   .current-temp {
@@ -1228,6 +1247,10 @@ onUnmounted(() => {
 
   .widget--hero {
     padding: var(--space-lg) var(--space-md);
+  }
+
+  .widget--hero__main {
+    padding-top: 34px;
   }
 
   .widget--hourly,

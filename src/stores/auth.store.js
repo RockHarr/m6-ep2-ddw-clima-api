@@ -15,6 +15,7 @@ export const useAuthStore = defineStore("auth", () => {
   // --- Estado ---
   const isAuthenticated = ref(false);
   const loginError = ref("");
+  const currentUser = ref("");
 
   // --- Credenciales demo (hardcoded, no transable) ---
   const DEMO_USER = "profe";
@@ -30,6 +31,7 @@ export const useAuthStore = defineStore("auth", () => {
 
     if (username === DEMO_USER && password === DEMO_PASS) {
       isAuthenticated.value = true;
+      currentUser.value = username;
       localStorage.setItem(STORAGE_KEY, "authenticated");
       return true;
     }
@@ -45,6 +47,7 @@ export const useAuthStore = defineStore("auth", () => {
   function logout() {
     isAuthenticated.value = false;
     loginError.value = "";
+    currentUser.value = "";
     localStorage.removeItem(STORAGE_KEY);
   }
 
@@ -57,6 +60,7 @@ export const useAuthStore = defineStore("auth", () => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "authenticated") {
       isAuthenticated.value = true;
+      currentUser.value = DEMO_USER;
     } else if (stored !== null) {
       // Valor corrupto o manipulado → limpiar
       logout();
@@ -66,6 +70,7 @@ export const useAuthStore = defineStore("auth", () => {
   return {
     isAuthenticated,
     loginError,
+    currentUser,
     login,
     logout,
     loadSession,
