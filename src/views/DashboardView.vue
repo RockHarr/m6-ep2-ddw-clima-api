@@ -431,14 +431,11 @@ onUnmounted(() => {
 }
 
 .sidebar__search-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+  display: block;
 }
 
 .sidebar__search-row .city-search {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
 .sidebar__content {
@@ -793,8 +790,9 @@ onUnmounted(() => {
 }
 
 .geo-btn--inline {
-  width: auto;
-  flex-shrink: 0;
+  width: 100%;
+  margin-top: var(--space-sm);
+  justify-content: flex-start;
   background: rgba(67, 97, 238, 0.3);
   border: 1px solid rgba(147, 197, 253, 0.45);
   color: #dbeafe;
@@ -1106,6 +1104,17 @@ onUnmounted(() => {
     padding-top: var(--space-sm);
     padding-bottom: var(--space-sm);
     padding-right: 52px;
+  }
+
+  .sidebar__search-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .sidebar__search-row .city-search {
+    flex: 1;
+    min-width: 0;
   }
 
   .sidebar__search :deep(.city-search__mic) {
