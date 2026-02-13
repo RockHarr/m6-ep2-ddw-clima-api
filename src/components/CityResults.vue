@@ -100,7 +100,7 @@ const isSearching = computed(() => props.query && props.query.trim().length > 0)
   top: calc(100% + var(--space-xs));
   left: 0;
   right: 0;
-  z-index: 140;
+  z-index: 320;
   margin-top: 0;
   background: #0f172a;
   border: 1px solid var(--glass-border);

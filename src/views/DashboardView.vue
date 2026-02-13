@@ -28,20 +28,29 @@
         </div>
 
         <div class="sidebar__search">
-          <CitySearch
-            ref="citySearchRef"
-            @search="handleSearchUpdate"
-            @submit="handleSearchSubmit"
+          <div class="sidebar__search-row">
+            <CitySearch
+              ref="citySearchRef"
+              @search="handleSearchUpdate"
+              @submit="handleSearchSubmit"
+            />
+            <button
+              class="geo-btn geo-btn--inline"
+              :disabled="weatherStore.statusGeo === 'loading'"
+              @click="showGeoBanner = true"
+              title="Usar mi ubicación"
+              aria-label="Usar mi ubicación"
+            >
+              <span>{{ weatherStore.statusGeo === 'loading' ? '⏳' : '📍' }}</span>
+              <span class="geo-btn__label">Mi ubicación</span>
+            </button>
+          </div>
+          <CityResults
+            :query="searchQuery"
+            :mobileHidden="!searchQuery"
+            :searchOnly="true"
+            @select="handleCitySelect"
           />
-          <button
-            class="geo-btn"
-            :disabled="weatherStore.statusGeo === 'loading'"
-            @click="showGeoBanner = true"
-            title="Usar mi ubicación"
-          >
-            <span>{{ weatherStore.statusGeo === 'loading' ? '⏳' : '📍' }}</span>
-            <span class="geo-btn__label">Mi ubicación</span>
-          </button>
           <Transition name="fade">
             <div v-if="showGeoBanner" class="geo-banner">
               <p>Usaremos tu ubicación para mostrarte el clima local.</p>
@@ -57,12 +66,6 @@
               <button class="geo-feedback__close" @click="weatherStore.geoMessage = ''" aria-label="Cerrar">✕</button>
             </div>
           </Transition>
-          <CityResults
-            :query="searchQuery"
-            :mobileHidden="!searchQuery"
-            :searchOnly="true"
-            @select="handleCitySelect"
-          />
         </div>
       </div>
 
@@ -412,6 +415,18 @@ onUnmounted(() => {
 .sidebar__search {
   position: relative;
   z-index: 120;
+  overflow: visible;
+}
+
+.sidebar__search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.sidebar__search-row .city-search {
+  flex: 1;
+  min-width: 0;
 }
 
 .sidebar__content {
@@ -745,6 +760,12 @@ onUnmounted(() => {
   min-height: 36px;
 }
 
+.geo-btn span:first-child {
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .geo-btn:hover:not(:disabled) {
   color: var(--color-text);
   background: rgba(255, 255, 255, 0.05);
@@ -757,6 +778,20 @@ onUnmounted(() => {
 
 .geo-btn__label {
   font-size: var(--font-size-small);
+}
+
+.geo-btn--inline {
+  width: auto;
+  flex-shrink: 0;
+  background: rgba(67, 97, 238, 0.3);
+  border: 1px solid rgba(147, 197, 253, 0.45);
+  color: #dbeafe;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25), 0 8px 20px rgba(30, 64, 175, 0.3);
+}
+
+.geo-btn--inline:hover:not(:disabled) {
+  background: rgba(67, 97, 238, 0.45);
+  color: #eff6ff;
 }
 
 /* Geo banner */
@@ -926,8 +961,8 @@ onUnmounted(() => {
 
   .sidebar__header {
     margin-bottom: 0;
-    height: 100%;
-    overflow-y: auto;
+    height: auto;
+    overflow: visible;
   }
 
   /* Ocultar inicialmente el contenido del drawer en mobile */
@@ -1034,6 +1069,35 @@ onUnmounted(() => {
     overflow-y: visible;
     overflow-x: hidden;
     min-height: calc(100dvh - var(--mobile-header-offset));
+  }
+
+  .geo-btn--inline {
+    width: 46px;
+    height: 46px;
+    justify-content: center;
+    padding: 0;
+    margin-top: 0;
+    border-radius: var(--radius-md);
+  }
+
+  .geo-btn--inline span:first-child {
+    font-size: 1.25rem;
+    text-shadow: 0 0 10px rgba(147, 197, 253, 0.45);
+  }
+
+  .geo-btn--inline .geo-btn__label {
+    display: none;
+  }
+
+  .sidebar__search :deep(.city-search__input) {
+    min-height: 40px;
+    padding-top: var(--space-sm);
+    padding-bottom: var(--space-sm);
+  }
+
+  .sidebar__search :deep(.city-search__mic) {
+    width: 40px;
+    height: 40px;
   }
 
   .favorites-feedback {
