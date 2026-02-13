@@ -9,7 +9,8 @@ App del clima con autenticación, búsqueda de ciudades por API, tarjetas de pro
 | Vue 3        | ^3.5    | Framework UI (Composition API) |
 | Vite         | ^7.3    | Build tool + dev server        |
 | Vue Router 4 | ^4      | Rutas + navigation guard       |
-| Pinia        | ^2      | Stores reactivos               |
+| Pinia        | ^3      | Stores reactivos               |
+| OGL          | latest  | WebGL para efecto Aurora       |
 | Fetch API    | —       | Requests HTTP                  |
 | CSS          | —       | Estilos propios + tokens       |
 
@@ -24,36 +25,40 @@ Contraseña: 1234
 
 - **Open-Meteo Geocoding** — Búsqueda de ciudades por nombre (sin key)
 - **Open-Meteo Forecast** — Pronóstico diario: temp, clima, viento, UV (sin key)
+- **Nominatim (OSM)** — Geocodificación inversa para geolocalización (sin key)
 
 ## 📁 Arquitectura
 
 ```
 src/
 ├── components/       # Componentes reutilizables
-│   ├── AppLayout.vue       # Layout + transición de página
-│   ├── NavBar.vue          # Barra superior + logout
-│   ├── CitySearch.vue      # Input búsqueda (debounce 300ms)
-│   ├── CityResults.vue     # Dropdown resultados
-│   ├── WeatherCards.vue     # Contenedor cards clima
-│   ├── WeatherCard.vue     # Card individual (emoji + temps)
-│   ├── UiAlert.vue         # Alertas (error/info/success)
-│   └── LoadingSkeleton.vue # Skeleton animado
+│   ├── AppLayout.vue         # Layout + transición de página
+│   ├── NavBar.vue            # Barra superior + logout
+│   ├── CitySearch.vue        # Input búsqueda (debounce 300ms)
+│   ├── CityResults.vue       # Dropdown resultados + ciudades populares
+│   ├── WeatherCards.vue      # Contenedor cards clima
+│   ├── WeatherCard.vue       # Card individual (emoji + temps + barra visual)
+│   ├── SidebarCityCard.vue   # Tarjeta rica con reloj local y clima actual
+│   ├── AuroraBackground.vue  # Efecto aurora WebGL (vue-bits, requiere ogl)
+│   ├── ShinyText.vue         # Texto con brillo deslizante (vue-bits)
+│   ├── UiAlert.vue           # Alertas (error/info/success)
+│   └── LoadingSkeleton.vue   # Skeleton animado
 ├── views/
-│   ├── LoginView.vue       # Login con glassmorphism
-│   └── DashboardView.vue   # Dashboard principal
+│   ├── LoginView.vue         # Login glassmorphism + fondo Aurora
+│   └── DashboardView.vue     # Dashboard: sidebar + bento grid
 ├── stores/
-│   ├── auth.store.js       # Auth + localStorage
-│   └── weather.store.js    # Clima + favoritos + lastCity
+│   ├── auth.store.js         # Auth + persistencia localStorage
+│   └── weather.store.js      # Clima + favoritos + lastCity + geolocalización
 ├── services/
-│   ├── geocoding.js        # Fetch ciudades
-│   └── weather.js          # Fetch pronóstico
+│   ├── geocoding.js          # Fetch ciudades (Open-Meteo)
+│   └── weather.js            # Fetch pronóstico (Open-Meteo)
 ├── utils/
-│   └── transform.js        # Normalización + WMO codes + formatDate
+│   └── transform.js          # Normalización + WMO codes + formatDate
 ├── styles/
-│   ├── tokens.css          # Design tokens (colores, spacing, etc.)
-│   └── main.css            # Reset + utilities + transitions
+│   ├── tokens.css            # Design tokens (colores, spacing, transitions, themes)
+│   └── main.css              # Reset + utilities + animaciones
 ├── router/
-│   └── index.js            # Rutas + guard de autenticación
+│   └── index.js              # Rutas + guard de autenticación
 ├── App.vue
 └── main.js
 ```
@@ -91,7 +96,9 @@ npm run build    # Output: dist/
 ### Bonus
 
 - [x] Guardar última ciudad + autoload al entrar
-- [x] Favoritos (máx 6, chips, click-to-load, persistencia)
+- [x] Favoritos (máx 6, click-to-load, persistencia)
+- [x] Reloj local en tiempo real por zona horaria de cada ciudad
+- [x] Pronóstico horario 24h (scroll horizontal)
 
 ### Extras (del artículo)
 
@@ -99,6 +106,20 @@ npm run build    # Output: dist/
 - [x] Fecha formateada en español ("Martes 11 Feb")
 - [x] `@keyup.enter` en el buscador
 - [x] Limpiar input post-selección
+
+### Mejoras UX
+
+- [x] Fondo Aurora animado en login (WebGL via OGL)
+- [x] Texto bienvenida con efecto ShinyText en empty state
+- [x] Geolocalización del navegador con banner de permiso explicativo (fallback: New York)
+- [x] Viento e índice UV integrados en el widget Hero (no en cards separadas)
+- [x] Botón favorito como CTA claro ("☆ Guardar ciudad" / "★ Ciudad guardada")
+- [x] "Descubre el mundo" visible desde el primer render (ciudades populares con clima)
+- [x] Sección favoritos vacía: invitación a guardar ciudades
+- [x] Descubrimiento oculto en mobile hasta que el usuario busca activamente
+- [x] Debounce reset: campo vacío vuelve a mostrar ciudades populares
+- [x] Estado de error para carga de clima con botón reintentar
+- [x] Botón ✕ solo visible en ciudades guardadas como favoritas
 
 ## ♿ Accesibilidad (WCAG AA)
 
@@ -119,3 +140,5 @@ npm run build    # Output: dist/
 - **Dual status** (`weather.store.js`): explica por qué `statusCities` y `statusWeather` son independientes
 - **Transform** (`transform.js`): explica la capa de normalización y por qué los componentes no parsean JSON directo
 - **Reduced motion** (`main.css`): documenta la media query y su importancia para accesibilidad
+- **Geolocalización** (`weather.store.js → geolocateCity`): patrón de permiso explícito + geocodificación inversa + fallback silencioso
+- **Componentes vue-bits** (`AuroraBackground.vue`, `ShinyText.vue`): portados de TypeScript a JS, sin dependencia de la librería original — solo `ogl` para el canvas WebGL

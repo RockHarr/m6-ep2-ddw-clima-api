@@ -1,16 +1,6 @@
 /**
  * Weather Store (Pinia)
- *
- * Maneja todo el estado relacionado al clima:
- * - Búsqueda de ciudades (statusCities)
- * - Pronóstico del clima (statusWeather)
- * - Ciudad seleccionada, última ciudad, favoritos
- *
- * ¿Por qué statusCities y statusWeather separados?
- * Porque son flujos async independientes. Puede estar
- * cargando ciudades mientras el clima ya se muestra, o viceversa.
- * Si usáramos un solo status, un loading de ciudades
- * borraría las cards de clima que ya están visibles.
+ * Maneja todo el estado relacionado al clima, búsqueda y favoritos.
  */
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
@@ -18,205 +8,185 @@ import { searchCities as apiSearchCities } from "@/services/geocoding.js";
 import { fetchForecast as apiFetchForecast } from "@/services/weather.js";
 import { normalizeCities, normalizeForecast } from "@/utils/transform.js";
 
-// Claves de localStorage para persistencia de bonus features
 const LAST_CITY_KEY = "clima_last_city";
 const FAVORITES_KEY = "clima_favorites";
 const MAX_FAVORITES = 6;
+const DEFAULT_CITIES = [
+  { id: 1, name: "Santiago", admin: "Región Metropolitana", country: "Chile", lat: -33.4569, lon: -70.6483 },
+  { id: 2, name: "Madrid", admin: "Comunidad de Madrid", country: "España", lat: 40.4165, lon: -3.7026 },
+  { id: 3, name: "Tokyo", admin: "Tokyo", country: "Japón", lat: 35.6895, lon: 139.6917 },
+  { id: 4, name: "New York", admin: "New York", country: "EE.UU.", lat: 40.7128, lon: -74.0060 }
+];
 
 export const useWeatherStore = defineStore("weather", () => {
-  // --- Estado de búsqueda de ciudades ---
+  // --- Estado ---
   const cities = ref([]);
-  const statusCities = ref("idle"); // idle | loading | success | error
+  const statusCities = ref("idle");
   const errorCities = ref("");
-
-  // --- Estado del pronóstico ---
-  const forecast = ref([]);
-  const statusWeather = ref("idle"); // idle | loading | success | error
+  const forecast = ref(null);
+  const statusWeather = ref("idle");
   const errorWeather = ref("");
-
-  // --- Ciudad seleccionada ---
   const selectedCity = ref(null);
-
-  // --- Bonus: favoritos ---
   const favorites = ref([]);
   const favoritesMessage = ref("");
+  const favoritesWeather = ref({});
+  const defaultCitiesWeather = ref({});
+  const statusGeo = ref("idle"); // idle | loading | error
 
   // --- Computed ---
-  const hasForecast = computed(() => forecast.value.length > 0);
+  const hasForecast = computed(() => forecast.value?.daily?.length > 0);
   const hasCities = computed(() => cities.value.length > 0);
-  const isFavoriteFull = computed(
-    () => favorites.value.length >= MAX_FAVORITES,
-  );
+  const isFavoriteFull = computed(() => favorites.value.length >= MAX_FAVORITES);
 
-  /**
-   * Busca ciudades por nombre usando la API de geocoding.
-   * Actualiza statusCities para que la UI reaccione.
-   */
+  // --- Helpers ---
+  async function fetchWeatherForList(list, targetRef) {
+    for (const city of list) {
+      if (!targetRef.value[city.id]) {
+        try {
+          const raw = await apiFetchForecast(city.lat, city.lon);
+          targetRef.value[city.id] = normalizeForecast(raw);
+        } catch (err) {
+          console.error(`Error fetching weather for ${city.name}`, err);
+        }
+      }
+    }
+  }
+
+  // --- Actions ---
   async function searchCitiesAction(query) {
+    if (!query || !query.trim()) {
+      cities.value = DEFAULT_CITIES;
+      statusCities.value = "success";
+      fetchWeatherForList(DEFAULT_CITIES, defaultCitiesWeather);
+      return;
+    }
+
     statusCities.value = "loading";
     errorCities.value = "";
-    cities.value = [];
-
     try {
       const raw = await apiSearchCities(query);
       cities.value = normalizeCities(raw);
       statusCities.value = cities.value.length > 0 ? "success" : "empty";
     } catch (err) {
-      errorCities.value = "Error al buscar ciudades. Verifica tu conexión.";
+      errorCities.value = "Error al buscar ciudades.";
       statusCities.value = "error";
     }
   }
 
-  /**
-   * Selecciona una ciudad y dispara la carga del clima.
-   * También guarda como última ciudad en localStorage.
-   */
   async function selectCity(city) {
     selectedCity.value = city;
-    cities.value = []; // Cerrar dropdown
+    cities.value = [];
     statusCities.value = "idle";
-
-    // Guardar como última ciudad visitada (Bonus 1)
     localStorage.setItem(LAST_CITY_KEY, JSON.stringify(city));
-
     await fetchWeather();
   }
 
-  /**
-   * Obtiene el pronóstico para la ciudad seleccionada.
-   */
   async function fetchWeather() {
     if (!selectedCity.value) return;
-
     statusWeather.value = "loading";
     errorWeather.value = "";
-
     try {
-      const raw = await apiFetchForecast(
-        selectedCity.value.lat,
-        selectedCity.value.lon,
-      );
+      const raw = await apiFetchForecast(selectedCity.value.lat, selectedCity.value.lon);
       forecast.value = normalizeForecast(raw);
       statusWeather.value = "success";
     } catch (err) {
-      errorWeather.value = "Error al cargar el clima. Verifica tu conexión.";
+      errorWeather.value = "Error al cargar el clima.";
       statusWeather.value = "error";
     }
   }
 
-  /**
-   * Agrega una ciudad a favoritos (máximo 6).
-   * Se guarda en localStorage para persistir entre sesiones.
-   */
+  async function fetchWeatherForFavs() {
+    await fetchWeatherForList(favorites.value, favoritesWeather);
+  }
+
   function addFavorite(city) {
-    favoritesMessage.value = "";
-
-    if (favorites.value.length >= MAX_FAVORITES) {
-      favoritesMessage.value = `Máximo ${MAX_FAVORITES} favoritos alcanzado`;
-      return;
-    }
-
-    // Evitar duplicados por id
-    if (favorites.value.some((f) => f.id === city.id)) {
-      favoritesMessage.value = "Esta ciudad ya está en favoritos";
-      return;
-    }
-
+    if (favorites.value.length >= MAX_FAVORITES || favorites.value.some(f => f.id === city.id)) return;
     favorites.value.push({ ...city });
     saveFavorites();
+    fetchWeatherForFavs();
   }
 
-  /**
-   * Elimina una ciudad de favoritos por id.
-   */
   function removeFavorite(cityId) {
-    favoritesMessage.value = "";
-    favorites.value = favorites.value.filter((f) => f.id !== cityId);
+    favorites.value = favorites.value.filter(f => f.id !== cityId);
     saveFavorites();
   }
 
-  /**
-   * Verifica si una ciudad está en favoritos.
-   */
   function isFavorite(cityId) {
-    return favorites.value.some((f) => f.id === cityId);
+    return favorites.value.some(f => f.id === cityId);
   }
 
-  /**
-   * Persiste favoritos en localStorage.
-   */
   function saveFavorites() {
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites.value));
   }
 
-  /**
-   * Carga favoritos desde localStorage al montar el dashboard.
-   */
-  function loadFavorites() {
-    try {
-      const stored = localStorage.getItem(FAVORITES_KEY);
-      if (stored) {
-        favorites.value = JSON.parse(stored);
-      }
-    } catch {
-      favorites.value = [];
+  async function loadFavorites() {
+    const stored = localStorage.getItem(FAVORITES_KEY);
+    if (stored) {
+      favorites.value = JSON.parse(stored);
+      await fetchWeatherForFavs();
     }
   }
 
-  /**
-   * Carga la última ciudad visitada y auto-carga el clima.
-   * Se ejecuta al montar el dashboard (Bonus 1).
-   */
   async function loadLastCity() {
-    try {
-      const stored = localStorage.getItem(LAST_CITY_KEY);
-      if (stored) {
-        const city = JSON.parse(stored);
-        await selectCity(city);
-      }
-    } catch {
-      // Si hay datos corruptos, simplemente ignorar
-    }
+    const stored = localStorage.getItem(LAST_CITY_KEY);
+    if (stored) await selectCity(JSON.parse(stored));
   }
 
-  /**
-   * Limpia todo el estado de clima (se llama al hacer logout).
-   */
+  async function geolocateCity() {
+    if (!navigator.geolocation) {
+      await selectCity(DEFAULT_CITIES[3]); // fallback New York
+      return;
+    }
+
+    statusGeo.value = "loading";
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude: lat, longitude: lon } = position.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`,
+            { headers: { 'Accept-Language': 'es' } }
+          );
+          const data = await res.json();
+          const addr = data.address || {};
+          const city = {
+            id: `geo-${lat.toFixed(3)}-${lon.toFixed(3)}`,
+            name: addr.city || addr.town || addr.village || addr.municipality || "Mi Ubicación",
+            admin: addr.state || addr.region || "",
+            country: addr.country || "",
+            lat,
+            lon,
+          };
+          statusGeo.value = "idle";
+          await selectCity(city);
+        } catch {
+          statusGeo.value = "idle";
+          await selectCity(DEFAULT_CITIES[3]); // fallback New York
+        }
+      },
+      async () => {
+        statusGeo.value = "idle";
+        await selectCity(DEFAULT_CITIES[3]); // denegado → New York
+      },
+      { timeout: 8000 }
+    );
+  }
+
   function clearAll() {
     cities.value = [];
-    forecast.value = [];
+    forecast.value = null;
     selectedCity.value = null;
     statusCities.value = "idle";
     statusWeather.value = "idle";
-    errorCities.value = "";
-    errorWeather.value = "";
     favoritesMessage.value = "";
   }
 
   return {
-    // State
-    cities,
-    statusCities,
-    errorCities,
-    forecast,
-    statusWeather,
-    errorWeather,
-    selectedCity,
-    favorites,
-    favoritesMessage,
-    // Computed
-    hasForecast,
-    hasCities,
-    isFavoriteFull,
-    // Actions
-    searchCitiesAction,
-    selectCity,
-    fetchWeather,
-    addFavorite,
-    removeFavorite,
-    isFavorite,
-    loadFavorites,
-    loadLastCity,
-    clearAll,
+    cities, statusCities, errorCities, forecast, statusWeather, errorWeather,
+    selectedCity, favorites, favoritesWeather, defaultCitiesWeather, favoritesMessage,
+    statusGeo,
+    hasForecast, hasCities, isFavoriteFull,
+    searchCitiesAction, selectCity, fetchWeather, addFavorite, removeFavorite, isFavorite, loadFavorites, loadLastCity, clearAll, geolocateCity
   };
 });

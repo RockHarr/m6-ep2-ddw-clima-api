@@ -16,6 +16,8 @@ const weatherStore = useWeatherStore()
 const query = ref('')
 let debounceTimer = null
 
+const emit = defineEmits(['search'])
+
 /**
  * Ejecuta la búsqueda validando que no esté vacío.
  */
@@ -32,7 +34,12 @@ function handleSearch() {
  */
 watch(query, (newVal) => {
   clearTimeout(debounceTimer)
-  if (!newVal.trim()) return
+  emit('search', newVal)
+
+  if (!newVal.trim()) {
+    weatherStore.searchCitiesAction('')
+    return
+  }
 
   debounceTimer = setTimeout(() => {
     handleSearch()
@@ -51,25 +58,18 @@ defineExpose({ clearInput })
 
 <template>
   <div class="city-search">
-    <label for="city-input" class="city-search__label">Buscar ciudad</label>
-    <div class="city-search__row">
+    <div class="city-search__wrapper">
+      <span class="city-search__icon" aria-hidden="true">🔍</span>
       <input
         id="city-input"
         v-model="query"
         type="text"
         class="city-search__input"
-        placeholder="Ej: Santiago, Madrid, Tokyo..."
+        placeholder="Buscar ciudad..."
         autocomplete="off"
+        aria-label="Buscar ciudad"
         @keyup.enter="handleSearch"
       />
-      <button
-        class="city-search__btn"
-        @click="handleSearch"
-        :disabled="!query.trim()"
-        aria-label="Buscar ciudad"
-      >
-        Buscar
-      </button>
     </div>
   </div>
 </template>
@@ -79,29 +79,29 @@ defineExpose({ clearInput })
   width: 100%;
 }
 
-.city-search__label {
-  display: block;
-  font-size: var(--font-size-small);
-  font-weight: 500;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-sm);
+.city-search__wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.city-search__row {
-  display: flex;
-  gap: var(--space-md);
+.city-search__icon {
+  position: absolute;
+  left: var(--space-md);
+  color: var(--color-text-placeholder);
+  font-size: 1rem;
+  pointer-events: none;
 }
 
 .city-search__input {
-  flex: 1;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--color-card);
-  border: 1px solid var(--color-surface);
+  width: 100%;
+  padding: var(--space-md) var(--space-md) var(--space-md) 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   color: var(--color-text);
   min-height: 44px;
-  transition: border-color var(--transition-fast),
-              box-shadow var(--transition-fast);
+  transition: all var(--transition-base);
 }
 
 .city-search__input::placeholder {
@@ -109,29 +109,9 @@ defineExpose({ clearInput })
 }
 
 .city-search__input:focus {
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
   outline: none;
-}
-
-.city-search__btn {
-  padding: var(--space-md) var(--space-xl);
-  background: var(--color-primary);
-  color: white;
-  font-weight: 600;
-  border-radius: var(--radius-md);
-  min-height: 44px;
-  transition: background-color var(--transition-fast),
-              transform var(--transition-fast);
-}
-
-.city-search__btn:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-  transform: translateY(-1px);
-}
-
-.city-search__btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 </style>

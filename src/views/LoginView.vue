@@ -11,6 +11,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store.js'
+import AuroraBackground from '@/components/AuroraBackground.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -29,6 +30,13 @@ function handleLogin() {
 
 <template>
   <main class="login-page">
+    <AuroraBackground
+      :colorStops="['#0f172a', '#4361ee', '#06d6a0']"
+      :amplitude="1.2"
+      :blend="0.6"
+      :intensity="0.9"
+      :speed="0.6"
+    />
     <div class="login-card">
       <!-- Logo -->
       <div class="login-card__header">
@@ -103,12 +111,16 @@ function handleLogin() {
   align-items: center;
   justify-content: center;
   padding: var(--space-xl);
-  /* Gradiente de fondo sutil (heredado de body, pero reforzado aquí si se desea) */
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg);
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
+  position: relative;
+  z-index: 1;
   /* Glassmorphism */
   background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(20px);
