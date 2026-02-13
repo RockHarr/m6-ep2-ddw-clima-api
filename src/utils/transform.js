@@ -80,15 +80,24 @@ export function normalizeCities(raw) {
 }
 
 /**
- * Normaliza la respuesta de forecast a un array de 2 días.
- * Cada día tiene: fecha formateada, min/max, label clima, viento, UV.
+ * Normaliza la respuesta de forecast a un objeto estructurado.
+ * Incluye daily (7 días) y hourly (próximas 24 horas).
  */
 export function normalizeForecast(raw) {
-  if (!raw || !raw.daily) return [];
+  if (!raw || !raw.daily) return null;
 
-  const { daily } = raw;
+  const { daily, hourly, timezone, timezone_abbreviation } = raw;
+  const now = new Date();
+  const currentHourIndex = hourly.time.findIndex(t => new Date(t) >= now);
 
-  return daily.time.map((date, i) => {
+  // Próximas 24 horas a partir de ahora
+  const hourlyData = hourly.time.slice(currentHourIndex, currentHourIndex + 24).map((time, i) => ({
+    time: time.split('T')[1], // Solo la hora HH:mm
+    temp: Math.round(hourly.temperature_2m[currentHourIndex + i]),
+    icon: wmoCodeToLabel(hourly.weather_code[currentHourIndex + i]).icon
+  }));
+
+  const dailyData = daily.time.map((date, i) => {
     const weatherInfo = wmoCodeToLabel(daily.weather_code[i]);
 
     return {
@@ -102,4 +111,11 @@ export function normalizeForecast(raw) {
       uvIndex: Math.round(daily.uv_index_max[i]),
     };
   });
+
+  return {
+    daily: dailyData,
+    hourly: hourlyData,
+    timezone,
+    timezoneAbbr: timezone_abbreviation
+  };
 }

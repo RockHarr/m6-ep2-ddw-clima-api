@@ -8,7 +8,9 @@ import NavBar from './NavBar.vue'
 
 <template>
   <div class="app-layout">
-    <NavBar />
+    <!-- El NavBar ahora solo se muestra en el Login o como parte del layout si no hay auth -->
+    <NavBar v-if="$route.name === 'Login'" />
+    
     <router-view v-slot="{ Component }">
       <Transition name="fade" mode="out-in">
         <component :is="Component" />

@@ -3,7 +3,7 @@
    Reset, tipografía, focus-visible, reduced-motion
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @import './tokens.css';
 
 /* — Reset — */
@@ -24,15 +24,27 @@ body {
     font-family: var(--font-family);
     font-size: var(--font-size-body);
     color: var(--color-text);
-    /* Fondo dinámico dark premium */
-    background: linear-gradient(135deg, #0f172a 0%, #1e1e2f 50%, #1a1a3e 100%);
-    background-size: 200% 200%;
-    animation: gradient-bg 15s ease infinite;
+    /* Fondo premium más profundo */
+    background: #0f172a;
+    background-image:
+        radial-gradient(at 0% 0%, rgba(67, 97, 238, 0.15) 0, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(6, 214, 160, 0.1) 0, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(67, 97, 238, 0.1) 0, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.1) 0, transparent 50%);
+    background-attachment: fixed;
 
     line-height: 1.5;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
 }
 
 @keyframes gradient-bg {

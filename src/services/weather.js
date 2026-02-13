@@ -24,9 +24,10 @@ export async function fetchForecast(lat, lon) {
     longitude: lon,
     daily:
       "temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max,uv_index_max",
+    hourly: "temperature_2m,weather_code",
     current_weather: "true",
     timezone: "auto",
-    forecast_days: "2",
+    forecast_days: "7",
   });
 
   const response = await fetch(`${BASE_URL}?${params}`);
