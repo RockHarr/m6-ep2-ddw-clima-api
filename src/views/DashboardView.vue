@@ -6,7 +6,10 @@
     <!-- Sidebar -->
     <aside class="sidebar glass">
       <div class="sidebar__header">
-        <h2 class="sidebar__title">ClimaApp</h2>
+        <div class="sidebar__brand">
+          <AppLogo :size="32" />
+          <h2 class="sidebar__title">ClimaApp</h2>
+        </div>
         <div class="sidebar__search">
           <CitySearch ref="citySearchRef" @search="handleSearchUpdate" />
           <button
@@ -25,6 +28,12 @@
                 <button class="geo-banner__confirm" @click="handleGeoClick">Permitir</button>
                 <button class="geo-banner__cancel" @click="showGeoBanner = false">Cancelar</button>
               </div>
+            </div>
+          </Transition>
+          <Transition name="fade">
+            <div v-if="weatherStore.geoMessage" class="geo-feedback" role="alert">
+              <span class="geo-feedback__text">{{ weatherStore.geoMessage }}</span>
+              <button class="geo-feedback__close" @click="weatherStore.geoMessage = ''" aria-label="Cerrar">✕</button>
             </div>
           </Transition>
         </div>
@@ -168,6 +177,7 @@ import WeatherCard from '@/components/WeatherCard.vue'
 import SidebarCityCard from '@/components/SidebarCityCard.vue'
 import ShinyText from '@/components/ShinyText.vue'
 import WeatherAmbient from '@/components/WeatherAmbient.vue'
+import AppLogo from '@/components/AppLogo.vue'
 
 const weatherStore = useWeatherStore()
 const authStore = useAuthStore()
@@ -270,10 +280,17 @@ onMounted(async () => {
   margin-bottom: var(--space-2xl);
 }
 
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
 .sidebar__title {
   font-size: var(--font-size-h2);
   font-weight: 800;
-  margin-bottom: var(--space-lg);
+  margin-bottom: 0;
   background: linear-gradient(to right, white, var(--color-text-muted));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -657,6 +674,38 @@ onMounted(async () => {
 }
 
 .geo-banner__cancel:hover { background: rgba(255, 255, 255, 0.1); }
+
+/* Geo feedback (resultado de geolocación) */
+.geo-feedback {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-md);
+  font-size: 0.72rem;
+  color: #fde68a;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  line-height: 1.4;
+}
+
+.geo-feedback__text {
+  flex: 1;
+}
+
+.geo-feedback__close {
+  flex-shrink: 0;
+  color: rgba(253, 230, 138, 0.6);
+  font-size: 10px;
+  padding: 2px 4px;
+  transition: color var(--transition-fast);
+  margin-top: 1px;
+}
+
+.geo-feedback__close:hover {
+  color: #fde68a;
+}
 
 /* Favorites empty state */
 .sidebar__favorites-empty {

@@ -12,6 +12,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store.js'
 import AuroraBackground from '@/components/AuroraBackground.vue'
+import AppLogo from '@/components/AppLogo.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -40,7 +41,7 @@ function handleLogin() {
     <div class="login-card">
       <!-- Logo -->
       <div class="login-card__header">
-        <span class="login-card__icon" aria-hidden="true">🌤️</span>
+        <AppLogo :size="72" :glow="true" class="login-card__logo" />
         <h1 class="login-card__title">ClimaApp</h1>
       </div>
 
@@ -137,11 +138,8 @@ function handleLogin() {
   margin-bottom: var(--space-2xl);
 }
 
-.login-card__icon {
-  font-size: 3rem;
-  display: block;
-  margin-bottom: var(--space-md);
-  filter: drop-shadow(0 0 10px rgba(67, 97, 238, 0.5));
+.login-card__logo {
+  margin: 0 auto var(--space-md);
 }
 
 .login-card__title {

@@ -32,6 +32,7 @@ export const useWeatherStore = defineStore("weather", () => {
   const favoritesWeather = ref({});
   const defaultCitiesWeather = ref({});
   const statusGeo = ref("idle"); // idle | loading | error
+  const geoMessage = ref(""); // mensaje de feedback de geolocalización
 
   // --- Computed ---
   const hasForecast = computed(() => forecast.value?.daily?.length > 0);
@@ -133,8 +134,11 @@ export const useWeatherStore = defineStore("weather", () => {
   }
 
   async function geolocateCity() {
+    geoMessage.value = "";
+
     if (!navigator.geolocation) {
-      await selectCity(DEFAULT_CITIES[3]); // fallback New York
+      geoMessage.value = "Tu navegador no soporta geolocalización. Se cargó New York como alternativa.";
+      await selectCity(DEFAULT_CITIES[3]);
       return;
     }
 
@@ -162,12 +166,22 @@ export const useWeatherStore = defineStore("weather", () => {
           await selectCity(city);
         } catch {
           statusGeo.value = "idle";
-          await selectCity(DEFAULT_CITIES[3]); // fallback New York
+          geoMessage.value = "No se pudo identificar tu ciudad. Se cargó New York como alternativa.";
+          await selectCity(DEFAULT_CITIES[3]);
         }
       },
-      async () => {
+      async (err) => {
         statusGeo.value = "idle";
-        await selectCity(DEFAULT_CITIES[3]); // denegado → New York
+        if (err.code === 1) {
+          // PERMISSION_DENIED
+          geoMessage.value = "Permiso de ubicación denegado. En macOS: Sistema > Privacidad y seguridad > Localización. Se cargó New York.";
+        } else if (err.code === 3) {
+          // TIMEOUT
+          geoMessage.value = "Tiempo agotado al obtener ubicación. Se cargó New York como alternativa.";
+        } else {
+          geoMessage.value = "No se pudo obtener tu ubicación. Se cargó New York como alternativa.";
+        }
+        await selectCity(DEFAULT_CITIES[3]);
       },
       { timeout: 8000 }
     );
@@ -185,7 +199,7 @@ export const useWeatherStore = defineStore("weather", () => {
   return {
     cities, statusCities, errorCities, forecast, statusWeather, errorWeather,
     selectedCity, favorites, favoritesWeather, defaultCitiesWeather, favoritesMessage,
-    statusGeo,
+    statusGeo, geoMessage,
     hasForecast, hasCities, isFavoriteFull,
     searchCitiesAction, selectCity, fetchWeather, addFavorite, removeFavorite, isFavorite, loadFavorites, loadLastCity, clearAll, geolocateCity
   };
