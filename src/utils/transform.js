@@ -47,6 +47,18 @@ export function wmoCodeToLabel(code) {
 }
 
 /**
+ * Devuelve ícono horario considerando si es día o noche.
+ * Mantiene la misma etiqueta, pero ajusta el emoji para casos nocturnos.
+ */
+function hourlyIconForCode(code, isDay) {
+  if (!isDay) {
+    if (code === 0) return "🌙";
+    if (code === 1 || code === 2) return "🌙☁️";
+  }
+  return wmoCodeToLabel(code).icon;
+}
+
+/**
  * Formatea una fecha ISO (YYYY-MM-DD) en español legible.
  * Ejemplo: "2026-02-11" → "Martes 11 Feb"
  * Usa Intl.DateTimeFormat nativo, sin dependencias externas.
@@ -86,16 +98,25 @@ export function normalizeCities(raw) {
 export function normalizeForecast(raw) {
   if (!raw || !raw.daily) return null;
 
-  const { daily, hourly, timezone, timezone_abbreviation } = raw;
+  const { daily, hourly, timezone, timezone_abbreviation, current_weather } = raw;
   const now = new Date();
-  const currentHourIndex = hourly.time.findIndex(t => new Date(t) >= now);
+  const indexByCurrentWeatherTime = current_weather?.time
+    ? hourly.time.findIndex((t) => t === current_weather.time)
+    : -1;
+  const fallbackIndex = hourly.time.findIndex((t) => new Date(t) >= now);
+  const currentHourIndex = indexByCurrentWeatherTime >= 0 ? indexByCurrentWeatherTime : Math.max(0, fallbackIndex);
 
   // Próximas 24 horas a partir de ahora
-  const hourlyData = hourly.time.slice(currentHourIndex, currentHourIndex + 24).map((time, i) => ({
-    time: time.split('T')[1], // Solo la hora HH:mm
-    temp: Math.round(hourly.temperature_2m[currentHourIndex + i]),
-    icon: wmoCodeToLabel(hourly.weather_code[currentHourIndex + i]).icon
-  }));
+  const hourlyData = hourly.time.slice(currentHourIndex, currentHourIndex + 24).map((time, i) => {
+    const idx = currentHourIndex + i;
+    const code = hourly.weather_code[idx];
+    const isDay = hourly.is_day?.[idx] === 1;
+    return {
+      time: time.split("T")[1], // Solo la hora HH:mm
+      temp: Math.round(hourly.temperature_2m[idx]),
+      icon: hourlyIconForCode(code, isDay),
+    };
+  });
 
   const dailyData = daily.time.map((date, i) => {
     const weatherInfo = wmoCodeToLabel(daily.weather_code[i]);
