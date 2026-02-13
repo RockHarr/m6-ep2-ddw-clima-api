@@ -740,7 +740,9 @@ onMounted(async () => {
 }
 
 /* ═══════════════════════════════════════════════
-   RESPONSIVE — Tablet (≤1024px)
+   RESPONSIVE — Tablet & Mobile (≤1024px)
+   Sidebar → header sticky compacto en la parte superior.
+   Contenido meteorológico ocupa el 100% restante.
    ═══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .dashboard-layout {
@@ -751,27 +753,40 @@ onMounted(async () => {
     overflow-y: auto;
   }
 
+  /* Sidebar se convierte en header sticky */
   .sidebar {
     width: 100%;
     height: auto;
-    max-height: none;
+    position: sticky;
+    top: 0;
+    z-index: 20;
     border-right: none;
     border-bottom: 1px solid var(--glass-border);
-    padding: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
     flex-shrink: 0;
+    /* Fondo sólido para que el contenido pase por detrás */
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .sidebar__header {
-    margin-bottom: var(--space-lg);
+    margin-bottom: 0;
   }
 
-  .sidebar__content {
-    gap: var(--space-lg);
+  /* Ocultar favoritos, descubrimiento y footer en mobile */
+  .sidebar__content,
+  .sidebar__footer {
+    display: none;
+  }
+
+  .sidebar__brand {
+    margin-bottom: var(--space-sm);
   }
 
   .main-content {
     flex: 1;
-    padding: var(--space-xl);
+    padding: var(--space-lg);
     overflow-y: visible;
   }
 }
@@ -781,19 +796,7 @@ onMounted(async () => {
    ═══════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .sidebar {
-    padding: var(--space-md);
-  }
-
-  .sidebar__brand {
-    margin-bottom: var(--space-md);
-  }
-
-  .sidebar__header {
-    margin-bottom: var(--space-md);
-  }
-
-  .sidebar__content {
-    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
   }
 
   .main-content {
@@ -802,15 +805,16 @@ onMounted(async () => {
 
   .bento-grid {
     grid-template-columns: 1fr;
-    gap: var(--space-lg);
+    gap: var(--space-md);
   }
 
   .widget {
     padding: var(--space-lg);
   }
 
+  /* Hero compacto: sin min-height fijo */
   .widget--hero {
-    min-height: 200px;
+    min-height: auto;
     padding: var(--space-xl) var(--space-lg);
   }
 
@@ -819,15 +823,15 @@ onMounted(async () => {
   }
 
   .city-origin {
-    font-size: var(--font-size-body);
+    font-size: var(--font-size-small);
   }
 
   .current-temp {
-    font-size: 4.5rem;
+    font-size: 4rem;
   }
 
   .current-condition {
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-body);
   }
 
   .hero-details {
@@ -848,12 +852,12 @@ onMounted(async () => {
   }
 
   .empty-state {
-    margin-top: var(--space-3xl);
+    margin-top: var(--space-2xl);
     padding: 0 var(--space-md);
   }
 
   .empty-state__icon {
-    font-size: 3.5rem;
+    font-size: 3rem;
   }
 
   .empty-state__title {
@@ -866,15 +870,14 @@ onMounted(async () => {
    ═══════════════════════════════════════════════ */
 @media (max-width: 480px) {
   .current-temp {
-    font-size: 3.5rem;
+    font-size: 3rem;
   }
 
   .city-name {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 
   .widget--hero {
-    min-height: 160px;
     padding: var(--space-lg) var(--space-md);
   }
 
@@ -894,7 +897,11 @@ onMounted(async () => {
   }
 
   .sidebar__title {
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-body);
+  }
+
+  .sidebar__brand {
+    gap: var(--space-sm);
   }
 }
 </style>
