@@ -3,8 +3,9 @@
  * SidebarCityCard — Tarjeta rica para las ciudades en la barra lateral.
  * Muestra nombre, hora local, temperatura y condición con fondo dinámico.
  */
-import { computed, onMounted, ref, onUnmounted } from 'vue'
+import { computed, onMounted, ref, onUnmounted, watch } from 'vue'
 import { wmoCodeToLabel } from '@/utils/transform.js'
+import WeatherAmbient from '@/components/WeatherAmbient.vue'
 
 const props = defineProps({
   city: { type: Object, required: true },
@@ -32,9 +33,13 @@ function updateTime() {
   }).format(new Date())
 }
 
+watch(() => props.weather?.timezone, (tz) => {
+  if (tz) updateTime()
+})
+
 onMounted(() => {
   updateTime()
-  timer = setInterval(updateTime, 1000 * 60)
+  timer = setInterval(updateTime, 1000)
 })
 
 onUnmounted(() => {
@@ -62,10 +67,14 @@ const themeClass = computed(() => {
   if (label.includes('despejado')) return 'theme--sunny'
   if (label.includes('nublado')) return 'theme--cloudy'
   if (label.includes('lluvia') || label.includes('chubascos')) return 'theme--rainy'
-  if (label.includes('nieve')) return 'theme--snowy'
+  if (label.includes('nieve') || label.includes('nevada') || label.includes('granizo')) return 'theme--snowy'
   if (label.includes('tormenta')) return 'theme--stormy'
+  if (label.includes('niebla') || label.includes('llovizna')) return 'theme--foggy'
   return 'theme--default'
 })
+
+// Clave de tema para WeatherAmbient (sin prefijo 'theme--')
+const ambientTheme = computed(() => themeClass.value.replace('theme--', ''))
 </script>
 
 <template>
@@ -96,6 +105,8 @@ const themeClass = computed(() => {
       @click.stop="$emit('remove', city.id)"
       title="Eliminar de favoritos"
     >✕</button>
+
+    <WeatherAmbient :theme="ambientTheme" :timezone="props.weather?.timezone" />
   </div>
 </template>
 
@@ -129,12 +140,20 @@ const themeClass = computed(() => {
 }
 
 /* Background Themes sutiles */
-.theme--sunny { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
-.theme--cloudy { background: linear-gradient(135deg, #64748b, #475569); }
-.theme--rainy { background: linear-gradient(135deg, #334155, #1e293b); }
-.theme--snowy { background: linear-gradient(135deg, #94a3b8, #64748b); }
-.theme--stormy { background: linear-gradient(135deg, #1e1b4b, #0f172a); }
+.theme--sunny   { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+.theme--cloudy  { background: linear-gradient(135deg, #64748b, #475569); }
+.theme--rainy   { background: linear-gradient(135deg, #334155, #1e293b); }
+.theme--snowy   { background: linear-gradient(135deg, #94a3b8, #64748b); }
+.theme--stormy  { background: linear-gradient(135deg, #1e1b4b, #0f172a); }
+.theme--foggy   { background: linear-gradient(135deg, #475569, #334155); }
 .theme--default { background: rgba(255, 255, 255, 0.05); }
+
+/* Contenido por encima del WeatherAmbient */
+.city-card__main,
+.city-card__footer {
+  position: relative;
+  z-index: 1;
+}
 
 .city-card__main {
   display: flex;

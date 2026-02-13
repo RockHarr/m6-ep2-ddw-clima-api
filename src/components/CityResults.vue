@@ -126,8 +126,9 @@ const isSearching = computed(() => props.query && props.query.trim().length > 0)
 
 .city-results__item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   padding: var(--space-md) var(--space-lg);
   cursor: pointer;
   min-height: 48px;

@@ -65,6 +65,13 @@
 
     <!-- Main Content -->
     <main class="main-content">
+      <!-- Ambient ocupa todo el panel de contenido cuando hay clima cargado -->
+      <WeatherAmbient
+        v-if="weatherStore.statusWeather === 'success'"
+        :theme="currentTheme"
+        :timezone="weatherStore.forecast?.timezone"
+      />
+
       <Transition name="fade" mode="out-in">
         <div v-if="!weatherStore.selectedCity && weatherStore.statusWeather === 'idle'" class="empty-state" key="empty">
           <div class="empty-state__icon">🌤️</div>
@@ -118,7 +125,6 @@
               </div>
             </div>
 
-            <div class="weather-graphic" :class="`graphic--${currentTheme}`"></div>
           </article>
 
           <!-- Widget: Pronóstico por Horas -->
@@ -161,6 +167,7 @@ import CityResults from '@/components/CityResults.vue'
 import WeatherCard from '@/components/WeatherCard.vue'
 import SidebarCityCard from '@/components/SidebarCityCard.vue'
 import ShinyText from '@/components/ShinyText.vue'
+import WeatherAmbient from '@/components/WeatherAmbient.vue'
 
 const weatherStore = useWeatherStore()
 const authStore = useAuthStore()
@@ -210,8 +217,9 @@ const currentTheme = computed(() => {
   if (label.includes('despejado')) return 'sunny'
   if (label.includes('nublado')) return 'cloudy'
   if (label.includes('lluvia') || label.includes('chubascos')) return 'rainy'
-  if (label.includes('nieve')) return 'snowy'
+  if (label.includes('nieve') || label.includes('nevada') || label.includes('granizo')) return 'snowy'
   if (label.includes('tormenta')) return 'stormy'
+  if (label.includes('niebla') || label.includes('llovizna')) return 'foggy'
   return 'default'
 })
 
@@ -233,11 +241,12 @@ onMounted(async () => {
 }
 
 /* Themes Implementation */
-.theme--sunny { background: var(--theme-clear-bg); }
+.theme--sunny  { background: var(--theme-clear-bg);  }
 .theme--cloudy { background: var(--theme-cloudy-bg); }
-.theme--rainy { background: var(--theme-rainy-bg); }
-.theme--snowy { background: var(--theme-snow-bg); }
-.theme--stormy { background: var(--theme-storm-bg); }
+.theme--rainy  { background: var(--theme-rainy-bg);  }
+.theme--snowy  { background: var(--theme-snow-bg);   }
+.theme--stormy { background: var(--theme-storm-bg);  }
+.theme--foggy  { background: var(--theme-cloudy-bg); }
 
 .dashboard-layout {
   display: flex;
@@ -330,12 +339,15 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative; /* Ancla el WeatherAmbient */
 }
 
 .empty-state {
   margin-top: 10vh;
   text-align: center;
   max-width: 400px;
+  position: relative;
+  z-index: 1;
 }
 
 .empty-state__icon {
@@ -350,7 +362,9 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
-  gap: var(--space-2xl); /* More breathing room */
+  gap: var(--space-2xl);
+  position: relative; /* Se ubica encima del WeatherAmbient */
+  z-index: 1;
 }
 
 .widget {
@@ -371,7 +385,12 @@ onMounted(async () => {
   flex-direction: column;
   justify-content: center;
   min-height: 280px;
-  position: relative; /* For favorite toggle positioning */
+  position: relative;
+  /* Transparente: el ambient del main-content se ve a través */
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .favorite-toggle {
@@ -461,6 +480,9 @@ onMounted(async () => {
   grid-column: 1 / -1;
   padding: var(--space-xl);
   order: 2;
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
 }
 
 .hourly-list {
@@ -500,6 +522,9 @@ onMounted(async () => {
 .widget--forecast {
   grid-column: 1 / -1;
   order: 3;
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
 }
 
 .widget__title {
