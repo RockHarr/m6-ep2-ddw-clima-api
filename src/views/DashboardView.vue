@@ -725,21 +725,6 @@ onMounted(async () => {
   margin-bottom: var(--space-lg);
 }
 
-@media (max-width: 1024px) {
-  .dashboard-layout {
-    flex-direction: column;
-  }
-  .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .main-content {
-    padding: var(--space-xl);
-  }
-}
-
 .retry-btn {
   margin-top: var(--space-xl);
   padding: var(--space-md) var(--space-2xl);
@@ -754,12 +739,162 @@ onMounted(async () => {
   opacity: 0.85;
 }
 
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — Tablet (≤1024px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .dashboard-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--glass-border);
+    padding: var(--space-lg);
+    flex-shrink: 0;
+  }
+
+  .sidebar__header {
+    margin-bottom: var(--space-lg);
+  }
+
+  .sidebar__content {
+    gap: var(--space-lg);
+  }
+
+  .main-content {
+    flex: 1;
+    padding: var(--space-xl);
+    overflow-y: visible;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — Mobile (≤768px)
+   ═══════════════════════════════════════════════ */
 @media (max-width: 768px) {
+  .sidebar {
+    padding: var(--space-md);
+  }
+
+  .sidebar__brand {
+    margin-bottom: var(--space-md);
+  }
+
+  .sidebar__header {
+    margin-bottom: var(--space-md);
+  }
+
+  .sidebar__content {
+    gap: var(--space-md);
+  }
+
+  .main-content {
+    padding: var(--space-md);
+  }
+
   .bento-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-lg);
   }
-  .details-grid {
-    grid-template-columns: 1fr;
+
+  .widget {
+    padding: var(--space-lg);
+  }
+
+  .widget--hero {
+    min-height: 200px;
+    padding: var(--space-xl) var(--space-lg);
+  }
+
+  .city-name {
+    font-size: 1.8rem;
+  }
+
+  .city-origin {
+    font-size: var(--font-size-body);
+  }
+
+  .current-temp {
+    font-size: 4.5rem;
+  }
+
+  .current-condition {
+    font-size: var(--font-size-h3);
+  }
+
+  .hero-details {
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-lg);
+  }
+
+  .hero-detail-value {
+    font-size: var(--font-size-small);
+  }
+
+  .hourly-list {
+    gap: var(--space-md);
+  }
+
+  .hourly-item {
+    min-width: 50px;
+  }
+
+  .empty-state {
+    margin-top: var(--space-3xl);
+    padding: 0 var(--space-md);
+  }
+
+  .empty-state__icon {
+    font-size: 3.5rem;
+  }
+
+  .empty-state__title {
+    font-size: var(--font-size-h2);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — Small phone (≤480px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .current-temp {
+    font-size: 3.5rem;
+  }
+
+  .city-name {
+    font-size: 1.5rem;
+  }
+
+  .widget--hero {
+    min-height: 160px;
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  .widget--hourly,
+  .widget--forecast {
+    padding: var(--space-md);
+  }
+
+  .widget__title {
+    margin-bottom: var(--space-md);
+  }
+
+  .hero-details {
+    flex-wrap: wrap;
+    justify-content: center;
+    border-radius: var(--radius-md);
+  }
+
+  .sidebar__title {
+    font-size: var(--font-size-h3);
   }
 }
 </style>
