@@ -13,6 +13,7 @@ const weatherStore = useWeatherStore()
 const props = defineProps({
   query: { type: String, default: '' },
   mobileHidden: { type: Boolean, default: false },
+  searchOnly: { type: Boolean, default: false },
 })
 defineEmits(['select'])
 
@@ -20,7 +21,14 @@ const isSearching = computed(() => props.query && props.query.trim().length > 0)
 </script>
 
 <template>
-  <div class="city-results" v-if="weatherStore.statusCities !== 'idle'" :class="{ 'city-results--mobile-hidden': mobileHidden }">
+  <div
+    class="city-results"
+    v-if="weatherStore.statusCities !== 'idle' && (!searchOnly || isSearching)"
+    :class="{
+      'city-results--mobile-hidden': mobileHidden,
+      'city-results--dropdown': isSearching,
+    }"
+  >
     <!-- Loading -->
     <LoadingSkeleton v-if="weatherStore.statusCities === 'loading'" type="list" />
 
@@ -69,6 +77,8 @@ const isSearching = computed(() => props.query && props.query.trim().length > 0)
             role="option"
             tabindex="0"
             @click="$emit('select', city)"
+            @keydown.enter.prevent="$emit('select', city)"
+            @keydown.space.prevent="$emit('select', city)"
           >
             <span class="city-results__name">{{ city.name }}</span>
             <span class="city-results__detail">{{ city.admin ? `${city.admin}, ` : '' }}{{ city.country }}</span>
@@ -83,6 +93,21 @@ const isSearching = computed(() => props.query && props.query.trim().length > 0)
 .city-results {
   margin-top: var(--space-sm);
   max-width: 100%;
+}
+
+.city-results--dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: 0;
+  right: 0;
+  z-index: 140;
+  margin-top: 0;
+  background: #0f172a;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  max-height: min(55vh, 360px);
+  overflow-y: auto;
 }
 
 .city-results__discovery-header {

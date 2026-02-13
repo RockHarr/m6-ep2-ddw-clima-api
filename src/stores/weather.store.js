@@ -157,6 +157,12 @@ export const useWeatherStore = defineStore("weather", () => {
     if (stored) await selectCity(JSON.parse(stored));
   }
 
+  function getCurrentPosition(options) {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    });
+  }
+
   async function geolocateCity() {
     geoMessage.value = "";
 
@@ -166,49 +172,72 @@ export const useWeatherStore = defineStore("weather", () => {
       return;
     }
 
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    if (!window.isSecureContext && !isLocalhost) {
+      geoMessage.value = "En Android la ubicación requiere HTTPS. Abrí la app con https:// y revisá permisos del navegador.";
+      await selectCity(DEFAULT_CITIES[3]);
+      return;
+    }
+
+    if (navigator.permissions?.query) {
+      try {
+        const permission = await navigator.permissions.query({ name: "geolocation" });
+        if (permission.state === "denied") {
+          geoMessage.value = "Permiso de ubicación bloqueado en el navegador. Habilítalo en ajustes del sitio.";
+          await selectCity(DEFAULT_CITIES[3]);
+          return;
+        }
+      } catch {
+        // Algunos navegadores móviles no implementan Permissions API de forma completa.
+      }
+    }
+
     statusGeo.value = "loading";
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude: lat, longitude: lon } = position.coords;
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`,
-            { headers: { 'Accept-Language': 'es' } }
-          );
-          const data = await res.json();
-          const addr = data.address || {};
-          const city = {
-            id: `geo-${lat.toFixed(3)}-${lon.toFixed(3)}`,
-            name: addr.city || addr.town || addr.village || addr.municipality || "Mi Ubicación",
-            admin: addr.state || addr.region || "",
-            country: addr.country || "",
-            lat,
-            lon,
-          };
-          statusGeo.value = "idle";
-          await selectCity(city);
-        } catch {
-          statusGeo.value = "idle";
-          geoMessage.value = "No se pudo identificar tu ciudad. Se cargó New York como alternativa.";
-          await selectCity(DEFAULT_CITIES[3]);
-        }
-      },
-      async (err) => {
-        statusGeo.value = "idle";
-        if (err.code === 1) {
-          // PERMISSION_DENIED
-          geoMessage.value = "Permiso de ubicación denegado. En macOS: Sistema > Privacidad y seguridad > Localización. Se cargó New York.";
-        } else if (err.code === 3) {
-          // TIMEOUT
-          geoMessage.value = "Tiempo agotado al obtener ubicación. Se cargó New York como alternativa.";
+    try {
+      let position;
+      try {
+        // Primer intento: precisión alta (ideal para GPS habilitado)
+        position = await getCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+      } catch (err) {
+        // Fallback Android común: precisión baja + caché reciente para evitar timeout
+        if (err?.code === 3 || err?.code === 2) {
+          position = await getCurrentPosition({ enableHighAccuracy: false, timeout: 8000, maximumAge: 120000 });
         } else {
-          geoMessage.value = "No se pudo obtener tu ubicación. Se cargó New York como alternativa.";
+          throw err;
         }
-        await selectCity(DEFAULT_CITIES[3]);
-      },
-      { timeout: 8000 }
-    );
+      }
+
+      const { latitude: lat, longitude: lon } = position.coords;
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`,
+        { headers: { "Accept-Language": "es" } }
+      );
+      const data = await res.json();
+      const addr = data.address || {};
+      const city = {
+        id: `geo-${lat.toFixed(3)}-${lon.toFixed(3)}`,
+        name: addr.city || addr.town || addr.village || addr.municipality || "Mi Ubicación",
+        admin: addr.state || addr.region || "",
+        country: addr.country || "",
+        lat,
+        lon,
+      };
+      statusGeo.value = "idle";
+      await selectCity(city);
+    } catch (err) {
+      statusGeo.value = "idle";
+      if (err?.code === 1) {
+        geoMessage.value = "Permiso de ubicación denegado. En Android: navegador > Configuración del sitio > Ubicación. Se cargó New York.";
+      } else if (err?.code === 3) {
+        geoMessage.value = "Tiempo agotado al obtener ubicación. Verificá GPS/red y volvé a intentar. Se cargó New York.";
+      } else {
+        geoMessage.value = "No se pudo obtener tu ubicación. Revisá permisos y conexión. Se cargó New York.";
+      }
+      await selectCity(DEFAULT_CITIES[3]);
+    }
   }
 
   function clearAll() {

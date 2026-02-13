@@ -57,13 +57,17 @@
               <button class="geo-feedback__close" @click="weatherStore.geoMessage = ''" aria-label="Cerrar">✕</button>
             </div>
           </Transition>
+          <CityResults
+            :query="searchQuery"
+            :mobileHidden="!searchQuery"
+            :searchOnly="true"
+            @select="handleCitySelect"
+          />
         </div>
       </div>
 
       <div class="sidebar__drawer-content">
         <div class="sidebar__content">
-          <CityResults :query="searchQuery" @select="handleCitySelect" />
-  
           <section class="sidebar__favorites">
             <h3 class="sidebar__section-title">⭐ Mis Ciudades</h3>
             <div v-if="weatherStore.favorites.length > 0" class="sidebar__list">
@@ -236,9 +240,7 @@ function handleSearchUpdate(query) {
 
 function handleSearchSubmit(query) {
   if (!query) return
-  if (window.innerWidth <= 1024) {
-    isMobileMenuOpen.value = true
-  }
+  searchQuery.value = query
 }
 
 async function handleCitySelect(city) {
@@ -405,6 +407,11 @@ onUnmounted(() => {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.sidebar__search {
+  position: relative;
+  z-index: 120;
 }
 
 .sidebar__content {
@@ -928,18 +935,19 @@ onUnmounted(() => {
     position: fixed;
     left: 0;
     bottom: 0;
-    width: 280px;
+    width: min(360px, 88vw);
     background: #0f172a; /* Fondo sólido igual al header */
     z-index: 101; /* Encima del header y backdrop */
     transform: translateX(-100%);
     transition: transform var(--transition-base);
     display: flex;
     flex-direction: column;
-    padding-top: calc(var(--mobile-header-offset) + env(safe-area-inset-top));
     /* Drawer debajo del header fijo */
     top: calc(var(--mobile-header-offset) + env(safe-area-inset-top));
     border-right: 1px solid var(--glass-border);
     box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow: hidden;
   }
 
   /* Cuando el menú está abierto */
@@ -968,6 +976,7 @@ onUnmounted(() => {
   .sidebar__content {
     display: flex !important; /* Restaurar display flex */
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: var(--space-lg);
   }
